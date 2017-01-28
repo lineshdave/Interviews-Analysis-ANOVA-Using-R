@@ -1,0 +1,371 @@
+---
+title: "Analysis of Candidate Interviews - ANOVA Using R"
+output: html_notebook
+---
+
+## Two-way Repeated Measures ANOVA
+
+### A fictitious company's data set that provides a type of interviewer and interviewee candidate scores on three different types of assessments - behavioral, technical, and rapid-fire, was used for conducting two-way repeated measures analysis of variance (two-way ANOVA).
+
+### There are four different types of interviewers involved in the interviewing process - leadership, developers, analysts, and recent hires. Since the company has detailed guidelines on interviewing that also includes scoring, one of the assumptions made by the hiring company is that the assessment scores awarded to the candidates by any type of interviewing employee are highly standardized and unbiased. In other words, there will not be any major difference in the scores awarded to a candidate by one type of interviewer from the other interviewer types. Another assumption is also that a candidate on an average scores very similar or almost the same across all the three different assessments. This is due to the fact that these assessments are tightly coupled in terms of the subject matter and concepts included in them for a candidate. The difference is in the type of candidate responses that are to be observed and scored. 
+### After performing the ANOVA analysis, the results seem to indicate otherwise; there appears to be significant differences in the scores achieved in different assessments undertaken by the same candidate. Also, there seems to be some differences amongst the types of interviewer in awarding scores to the same combination of candidate and assessment. These results are discussed in details to conclude that the candidates differ in scoring between the different assessments, and also that interviews conducted by different types of employees within the company are not standardized and that they can be biased and skew the overall candidate score.
+
+<BR>
+
+### The Analysis and R coding Steps are as follows:
+
+<BR>
+
+#### Step-0: Forming Hypothesis
+
+##### <BR> The NULL Hypothesis formed based on the above problem description:
+* H01: Mu(Leadership) = Mu(Developers) = Mu(Analysts) = Mu(New Hires)
+* H02: Mu(Behavioral) = Mu(Technical) = Mu(Rapidfire)
+* H03: No interaction exists between the different Interviewer types and Assessment types
+
+<BR>
+
+#### Step-1A: Load all the R packages used within the program
+* car
+* lattice
+
+```{r, echo=FALSE}
+rm(list=ls())  # clear all env variables
+library("car")  # load the car package (install first, if necessary)
+library("lattice")
+```
+
+<BR>
+
+#### Step-1B: Populate csv and output files path variables
+
+```{r}
+csvfile.path <- paste0(getwd(), "//Interviews Analysis.csv")
+
+csvfile2.path <- paste0(getwd(), "//Interviews Analysis iData.csv")
+
+outfile.path <- paste0(getwd(), "//Interviews Analysis - Anova Output New.txt")
+
+csvfile.orig.path <- paste0(getwd(), "//Interviews Analysis - Orig.csv")
+
+interact.file.path <- paste0(getwd(), "//Interviews Analysis - Copy.csv")
+```
+
+<BR>
+
+#### Step-2: Read dataset and set output for display and saving to a file
+
+```{r}
+# output is appended to an existing file. output also sent to terminal. 
+sink(outfile.path, append=TRUE, split=TRUE)
+
+# Read the dataset into an R object
+data.interviews.analysis <- read.csv(csvfile.path, header = TRUE)
+
+# Read the idata (metadata) information into an R object
+idata.interviews.analysis <- read.csv(csvfile2.path, header = TRUE)
+
+# Read the original dataset into an R object
+dataorig.interviews.analysis <- read.csv(csvfile.orig.path, header = TRUE)
+
+# Read the copied dataset into an R object
+datacopy.interviews.analysis <- read.csv(interact.file.path, header = TRUE)
+
+```
+
+<BR>
+
+#### Step-3A: Display the iData (metadata) information
+
+```{r}
+idata.interviews.analysis
+```
+
+<BR>
+
+#### Step-3B: Display the Dataframe structure of the main Data set
+
+```{r}
+# Display the data structure and data
+#   shows the atypical column arrangement for repeated measures data
+str(data.interviews.analysis)
+```
+
+<BR>
+
+#### Step-3C: Display a sample from the Data set
+
+```{r}
+head(data.interviews.analysis)
+```
+
+<BR>
+
+#### Step-3D: Display Data Summary
+
+```{r}
+summary(data.interviews.analysis)
+
+```
+
+<BR>
+
+#### Step-4: Plot data in graphical form for Data Visualization
+
+#### <BR> Histograms for each data element arranged in 3 rows x 1 column
+
+##### <BR><I> Note: The data vectors are copied to fields with shorter names for code clarity.</I>
+
+```{r, echo=FALSE}
+f1 <- data.interviews.analysis$Leadership.Behavioral.Assessment
+f2 <- data.interviews.analysis$Leadership.Technical.Assessment
+f3 <- data.interviews.analysis$Leadership.Rapidfire.Assessment
+f4 <- data.interviews.analysis$Developers.Behavioral.Assessment
+f5 <- data.interviews.analysis$Developers.Technical.Assessment
+f6 <- data.interviews.analysis$Developers.Rapidfire.Assessment
+f7 <- data.interviews.analysis$Analysts.Behavioral.Assessment
+f8 <- data.interviews.analysis$Analysts.Technical.Assessment
+f9 <- data.interviews.analysis$Analysts.Rapidfire.Assessment
+f10 <- data.interviews.analysis$Recent.Hires.Behavioral.Assessment
+f11 <- data.interviews.analysis$Recent.Hires.Technical.Assessment
+f12 <- data.interviews.analysis$Recent.Hires.Rapidfire.Assessment
+```
+
+```{r}
+par(mfrow=c(4,3))
+hist(f1, col="red", main="Leadership Behavioral", 
+     xlab="Scores", ylab="Candidates")
+hist(f2, col="blue", main="Leadership Technical", 
+     xlab="Scores", ylab="Candidates")
+hist(f3, col="green", main="Leadership Rapidfire", 
+     xlab="Scores", ylab="Candidates")
+hist(f4, col="red", main="Developers Behavioral", 
+     xlab="Scores", ylab="Candidates")
+hist(f5, col="blue", main="Developers Technical", 
+     xlab="Scores", ylab="Candidates")
+hist(f6, col="green", main="Developers Rapidfire", 
+     xlab="Scores", ylab="Candidates")
+hist(f7, col="red", main="Analysts Behavioral", 
+     xlab="Scores", ylab="Candidates")
+hist(f8, col="blue", main="Analysts Technical", 
+     xlab="Scores", ylab="Candidates")
+hist(f9, col="green", main="Analysts Rapidfire", 
+     xlab="Scores", ylab="Candidates")
+hist(f10, col="red", main="Recent Hires Behavioral", 
+     xlab="Scores", ylab="Candidates")
+hist(f11, col="blue", main="Recent Hires Technical", 
+     xlab="Scores", ylab="Candidates")
+hist(f12, col="green", main="Recent Hires Rapidfire", 
+     xlab="Scores", ylab="Candidates")
+```
+
+<BR>
+
+#### Behavioral Assessment Conditional Scatter Plot Matrices and Parallel Coordinate Plots
+
+```{r}
+splom(data.interviews.analysis[c(2,5,8,11)], main="Behavioral Scores",
+      varnames = c("Leadership", "Developer", "Analyst", "Recent Hire"))
+```
+<BR>
+
+#### Plot for Behavioral/Technical Assessment across different Interviewer Types
+
+```{r}
+f1.copy <- factor(datacopy.interviews.analysis$Interviewer.Type, 
+                  c(1, 2, 3, 4),
+                  labels=c("Leadership Interviewer", 
+                           "Developer Interviewer", 
+                           "Analyst Interviewer",
+                           "Recent Hire Interviewer"))
+f2.copy <- datacopy.interviews.analysis$Behavioral.Assessment
+f3.copy <- datacopy.interviews.analysis$Technical.Assessment
+f4.copy <- datacopy.interviews.analysis$Candidate.ID
+xyplot(f2.copy ~ f3.copy | f1.copy, col="red", 
+       main="Behavioral/Technical Scores Distribution by Interviewer Type", 
+       xlab="Technical", ylab="Behavioral") 
+
+```
+
+##### Following are some of the observations:
+* Recent Hire Interviewers, although quite liberal scorers award low scores in behavioral and high in technical.
+* Developer Interviewers award high scores in Behavioral, but low in Technical as expected.
+* Leadership Interviewers are similar to Recent Hire Interviewers except that they are not very generous as the later.
+* Analyst Interviewers are more balanced in terms of awarding both Behavioral and Technical assessment scores to candidates.
+
+<BR>
+
+#### Plot that combines Boxplots to a Scatterplot of Behavioral/Technical assessment for each Interviewer Type
+
+##### <BR><I> Leadership Interviewer Type </I>
+
+```{r}
+par(fig=c(0,0.8,0,0.8))
+plot(f1, f2, 
+     xlab="Leadership Behavioral", ylab="Leadership Technical", 
+     col="blue")
+abline(lm(f2 ~ f1), col = "purple")
+
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(f1, horizontal=TRUE, axes=FALSE, col="red")
+
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+boxplot(f2, axes=FALSE, col="blue")
+
+mtext("Leadership Interviewer - Behavioral/Technical Scores Distribution\n", 
+      side=3, outer=TRUE, line=-3)
+```
+
+<BR>
+
+##### <I> Developer Interviewer Type </I>
+
+```{r}
+par(fig=c(0,0.8,0,0.8))
+plot(f4, f5, 
+     xlab="Devlopers Behavioral", ylab="Developers Technical", 
+     col="blue")
+abline(lm(f5 ~ f4), col = "purple")
+
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(f4, horizontal=TRUE, axes=FALSE, col="red")
+
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+boxplot(f5, axes=FALSE, col="blue")
+mtext("Developer Interviewer - Behavioral/Technical Scores Distribution\n",
+      side=3, outer=TRUE, line=-3)
+```
+
+<BR>
+
+##### <I> Analyst Interviewer Type </I>
+
+```{r}
+par(fig=c(0,0.8,0,0.8))
+plot(f7, f8, 
+     xlab="Analysts Behavioral", ylab="Analysts Technical", 
+     col="blue")
+abline(lm(f8 ~ f7), col = "purple")
+
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(f7, horizontal=TRUE, axes=FALSE, col="red")
+
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+boxplot(f8, axes=FALSE, col="blue")
+mtext("Analysts Interviewer - Behavioral/Technical Scores Distribution\n",
+      side=3, outer=TRUE, line=-3)
+```
+
+<BR>
+
+##### <I> Recent Hire Interviewer Type </I>
+
+```{r}
+par(fig=c(0,0.8,0,0.8))
+plot(f10, f11, 
+     xlab="Recent Hires Behavioral", ylab="Recent Hires Technical",
+     col="blue")
+abline(lm(f11 ~ f10), col = "purple")
+
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(f10, horizontal=TRUE, axes=FALSE, col="red")
+
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+boxplot(f11, axes=FALSE, col="blue")
+mtext("Recent Hires Interviewer - Behavioral/Technical Scores Distribution\n",
+      side=3, outer=TRUE, line=-3)
+```
+
+<BR>
+
+#### Plot univariate effects of one or more factors, typically for a designed experiment as analyzed by ANOVA (aov)
+
+```{r}
+dataorig.interviews.analysis$Interviewer.Type <-
+  factor(dataorig.interviews.analysis$Interviewer.Type)
+datacopy.interviews.analysis$Interviewer.Type <-
+  factor(datacopy.interviews.analysis$Interviewer.Type)
+
+plot.design(dataorig.interviews.analysis, main = "Main Effects")
+```
+
+<BR>
+
+#### Mean Scores of different Assessments across all Interviewer Types
+
+```{r}
+tapply(dataorig.interviews.analysis$Behavioral.Assessment,
+       list(dataorig.interviews.analysis$Interviewer.Type), mean)
+
+tapply(dataorig.interviews.analysis$Technical.Assessment,
+       list(dataorig.interviews.analysis$Interviewer.Type), mean)
+
+tapply(dataorig.interviews.analysis$Rapidfire.Assessment,
+       list(dataorig.interviews.analysis$Interviewer.Type), mean)
+
+tapply(dataorig.interviews.analysis$Behavioral.Assessment +
+       dataorig.interviews.analysis$Technical.Assessment +
+       dataorig.interviews.analysis$Rapidfire.Assessment,
+       list(dataorig.interviews.analysis$Interviewer.Type), mean)
+```
+
+<BR>
+
+#### Interaction Plot of Mean Scores for each Assessment across different Interviewer Types
+
+```{r}
+interaction.plot(dataorig.interviews.analysis$Technical.Assessment,
+                 dataorig.interviews.analysis$Interviewer.Type,
+                 dataorig.interviews.analysis$Behavioral.Assessment, 
+                 fun = mean, trace.label = "Interviewer", fixed=FALSE,
+                 xlab="Technical Assessment", 
+                 ylab="Behavioral Assessment", 
+                 col = c("red", "blue", "black", "green"))
+```
+
+<BR>
+
+### Step-5 Build Linear Model and Display its Summary
+
+```{r}
+# use cbind() to bind the columns of the original dataset
+interestBind <- cbind(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12)
+
+# use lm() to generate a linear model using the bound columns from above
+interestModel <- lm(interestBind ~ 1)
+
+# display summary
+summary(interestModel)
+```
+
+<BR>
+
+### Step-6: Perform Anova on the above linear model
+
+```{r}
+#compose the Anova(mod, idata, idesign) function
+analysis <- Anova(interestModel, 
+                  idata = idata.interviews.analysis, 
+                  idesign = ~ Interviewer.Type * Assessment.Type)
+
+#use summary(object) to visualize the results of the repeated measures ANOVA
+summary(analysis, multivariate = FALSE)
+```
+
+<BR>
+
+##### At 95% confidence level, that is, at alpha level of 0.05, lower p-value (<0.05) results for Assessment Type and also for the interaction between Interviewer Type and Assessment Type. This indicates that we can REJECT two of the three NULL hypothesis or assumptions we have formed earlier -
+
+* H02: Mu(Behavioral) = Mu(Technical) = Mu(Rapid-fire); and,
+* H03: No interaction exists between the Interviewer Type and Assessment Type factors. 
+
+##### We will sustain the remaining assumption - 
+* H01: Mu(Leadership) = Mu(Developers) = Mu(Analysts) = Mu(Recent Hires).
+
+##### In other words, 
+* There is a significant difference between the scores received by the candidates in the different assessments - behavioral, technical, and rapid-fire; and,
+* There is also significant interaction that exists between the two factors - Interviewer Type and Assessment factors.
+
+##### The candidates do not score evenly across the different assessments. Although the three assessment types are tightly connected with each other, the nature of these assessments itself bring in different results. Additionally, there is no even ness amongst the interviewer types on how they rate these three assignments; that is, there is statistically significant interaction between Interviewer Type and Assessment Type. It appears that one interviewer type would be liberal in assessments A and/or B, but conservative for assessment C. On the other hand, another interviewer type could be conservative in assessments A and/or B, and be liberal for the third assessment C, These results suggest that the data should be further examined at the level of simple main effects to dig deeper. 
+
+##### So, the next step conducts the two-way ANOVA with Interactions and Simple Main Effects.
