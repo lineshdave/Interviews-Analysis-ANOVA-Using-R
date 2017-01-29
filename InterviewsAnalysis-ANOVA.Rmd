@@ -10,9 +10,10 @@ output: html_notebook
 ### There are four different types of interviewers involved in the interviewing process - leadership, developers, analysts, and recent hires. Since the company has detailed guidelines on interviewing that also includes scoring, one of the assumptions made by the hiring company is that the assessment scores awarded to the candidates by any type of interviewing employee are highly standardized and unbiased. In other words, there will not be any major difference in the scores awarded to a candidate by one type of interviewer from the other interviewer types. Another assumption is also that a candidate on an average scores very similar or almost the same across all the three different assessments. This is due to the fact that these assessments are tightly coupled in terms of the subject matter and concepts included in them for a candidate. The difference is in the type of candidate responses that are to be observed and scored. 
 ### After performing the ANOVA analysis, the results seem to indicate otherwise; there appears to be significant differences in the scores achieved in different assessments undertaken by the same candidate. Also, there seems to be some differences amongst the types of interviewer in awarding scores to the same combination of candidate and assessment. These results are discussed in details to conclude that the candidates differ in scoring between the different assessments, and also that interviews conducted by different types of employees within the company are not standardized and that they can be biased and skew the overall candidate score.
 
-<BR>
+#### <BR> NOTE: <I>A tutorial that appeared in R-Bloggers and written by John Quick: [R Tutorial Series: Two-way Repeated Measures ANOVA](https://www.r-bloggers.com/r-tutorial-series-two-way-repeated-measures-anova/) was used as a reference to complete this analysis.</I>
 
-### The Analysis and R coding Steps are as follows:
+
+### <BR>The Complete Analysis and R coding Steps are as follows: 
 
 <BR>
 
