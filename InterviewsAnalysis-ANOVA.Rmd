@@ -366,6 +366,154 @@ summary(analysis, multivariate = FALSE)
 * There is a significant difference between the scores received by the candidates in the different assessments - behavioral, technical, and rapid-fire; and,
 * There is also significant interaction that exists between the two factors - Interviewer Type and Assessment factors.
 
-##### The candidates do not score evenly across the different assessments. Although the three assessment types are tightly connected with each other, the nature of these assessments itself bring in different results. Additionally, there is no even ness amongst the interviewer types on how they rate these three assignments; that is, there is statistically significant interaction between Interviewer Type and Assessment Type. It appears that one interviewer type would be liberal in assessments A and/or B, but conservative for assessment C. On the other hand, another interviewer type could be conservative in assessments A and/or B, and be liberal for the third assessment C, These results suggest that the data should be further examined at the level of simple main effects to dig deeper. 
+##### The candidates do not score evenly across the different assessments. Although the three assessment types are tightly connected with each other, the nature of these assessments itself bring in different results. Additionally, there is no even ness amongst the interviewer types on how they rate these three assignments; that is, there is statistically significant interaction between Interviewer Type and Assessment Type. It appears that one interviewer type would be liberal in assessments A and/or B, but conservative for assessment C. On the other hand, another interviewer type could be conservative in assessments A and/or B, and be liberal for the third assessment C, These results suggest that the data should be further examined at the level of interactions and simple main effects to dig deeper. 
 
 ##### So, the next step conducts the two-way ANOVA with Interactions and Simple Main Effects.
+
+<BR>
+
+### Step-7A: Load the same dataset in a different format (as shown below)
+
+```{r}
+csvfile3.path <- paste0(getwd(), 
+                        "//Interviews Analysis - 2-Way Interaction.csv")
+dataTwoWayInteraction <- read.csv(csvfile3.path, header = TRUE)
+```
+
+<BR>
+
+### Step-7B: Display the structure of the newly loaded dataset
+
+```{r}
+str(dataTwoWayInteraction)
+```
+
+<BR>
+
+### Step-7C: Display a sample of the newly loaded dataset
+
+```{r}
+head(dataTwoWayInteraction)
+```
+
+<BR>
+
+### Step-8: First, begin with anova() to test the omnibus hypothesis
+
+#### <BR> Test if the main effects or interaction are present in the independent variables
+
+```{r}
+anova(lm(Score ~ Interviewer.Type * Assessment.Type, dataTwoWayInteraction))
+```
+
+#### The significant omnibus interaction suggests that we should ignore the main effects and instead investigate the simple main effects for our independent variables. To do so, we need to divide our dataset along each level of our Assessment variable.
+
+<BR>
+
+### Step-9A: Subset Dataset based on Assessment type
+#### <BR> Run ANOVA on each Assessment type data subset to investigate the impacts of Interviewer types on it.
+
+```{r}
+# behavioral assessment subset
+dataBehavioral <- subset(dataTwoWayInteraction, Assessment.Type == "Behavioral")
+# technical assessment subset
+dataTechnical <- subset(dataTwoWayInteraction, Assessment.Type == "Technical")
+# rapidfire assessment subset
+dataRapidfire <- subset(dataTwoWayInteraction, Assessment.Type == "Rapidfire")
+
+# behavioral assessment
+anova(lm(Score ~ Interviewer.Type, dataBehavioral))
+# technical assessment
+anova(lm(Score ~ Interviewer.Type, dataTechnical))
+# rapidfire assessment
+anova(lm(Score ~ Interviewer.Type, dataRapidfire))
+```
+<BR>
+
+#### This is similar to running three one-way ANOVA with Interviewer type being the independent variable. So, to control Type I error, the .05 alpha level is divided by three (0.017). 
+#### So, at an alpha level of 0.017, the Interviewer type effect within the Behavioral Assessment (p < 2.2e-16) and Technical Assessment (p = 7.71e-13) is statistically significant.
+#### In the Behavioral Assessment, the means are 76.28, 87.96, 61.28, and 60.28 for Analyst, Developer, Leadership, and Recent Hire type Interviewers respecitvely. In the Technical Assessment, the means are 73.60, 66.76, 84.48, and 89.60 for Analyst, Developer, Leadership, and Recent Hire type Interviewers respecitvely. These results suggest that the Behavioral Assessment is scored liberally by the Developers and conservatively by the Recent Hire Interviewers, while the Technical Asssessment is scored liberally by the Recent Hires and conservatively by the Developer Interviewers. Further, there is insufficient statistical support for a Interviewer type difference or impact in the Rapidfire Assessment.
+
+<BR>
+
+### Step-9B (Optional): Now, subset Dataset based on Interviewer type
+#### <BR> Run ANOVA on each Interviewer type data subset to investigate the impacts of Assessment types on it. This is an optional step since the difference in the means of Interviewer type was not found statistically significant as per the ANOVA analysis conducted earlier.
+
+```{r}
+# leadership subset
+dataLeadership <- subset(dataTwoWayInteraction, Interviewer.Type == "Leadership")
+# developer subset
+dataDevelopers <- subset(dataTwoWayInteraction, Interviewer.Type == "Developers")
+# analysts subset
+dataAnalysts <- subset(dataTwoWayInteraction, Interviewer.Type == "Analysts")
+# recent hires subset
+dataRecentHires <- subset(dataTwoWayInteraction, Interviewer.Type == "Recent Hires")
+
+# leadership
+anova(lm(Score ~ Assessment.Type, dataLeadership))
+# developers
+anova(lm(Score ~ Assessment.Type, dataDevelopers))
+# analysts
+anova(lm(Score ~ Assessment.Type, dataAnalysts))
+# recent hires
+anova(lm(Score ~ Assessment.Type, dataRecentHires))
+```
+<BR>
+
+#### This is similar to running four one-way ANOVA with Assesment type being the independent variable. So, to control Type I error, the .05 alpha level is divided by four (0.01125). 
+#### So, at an alpha level of 0.0125, the Assessment type effect within the Leadership Interviewers (p = 6.349e-10), Developer Interviewers (p = 5.381e-08) and Recent Hire Interviewers (p < 2.2e-16) is statistically significant.
+#### For the Leadership Interviewers, in each of the Behavioral, Technical, and Rapidfire Assessments, the means are 61.28, 84.48, and 73.44  respecitvely. For the Developer Interviewers, the means are 87.96, 66.76, and 76.08 respecitvely. Finally, for the Recent Hire Interviewers, the means are 60.28, 89.6, and 75.36 respecitvely. These results suggest very similar to the observations above - Behavioral Assessment is scored liberally by the Developers and conservatively by the Recent Hire Interviewers, while the Technical Asssessment is scored liberally by the Recent Hires and conservatively by the Developer Interviewers. Further, there is insufficient statistical support for the mean difference in Rapid fire scoring by the different Interviewer types.
+
+<BR>
+
+### Step-11 (Optional): Demonstrate Data set for TwoWayComparison Testing can be same as TwoWayInteraction Testing as conducted in previous steps 
+
+```{r}
+#two way comparisons
+dataTwoWayComparisons <- dataTwoWayInteraction
+#recent hires
+anova(lm(Score ~ Interviewer.Type * Assessment.Type, dataTwoWayComparisons))
+```
+
+<BR>
+
+### Step-12: Conduct pair wise comparisons
+
+#### <BR> This test is conducted since the independent Interviewer type variable has more than 3 levels. It will investigate the significant differences that may be present amongst the interviewer type means
+
+```{r}
+pairwise.t.test(dataTwoWayComparisons$Score, dataTwoWayComparisons$Interviewer.Type, p.adj = "none")
+```
+
+#### These results indicate that there are are no statistically significant pairwise differences amongst the Interviewer types on the assessment score.
+
+#### <BR> Continue testing difference amongst Assessment Types to investiage the significant differences that maybe present amongst the assessment type means.
+
+```{r}
+pairwise.t.test(dataTwoWayComparisons$Score, dataTwoWayComparisons$Assessment.Type, p.adj = "none")
+```
+
+#### These results indicate that there are are statistically significant pairwise differences amongst the Behavioral and Technical, and, Rapidfire and Technical Assessment types from their score perspective.
+
+<BR>
+
+### Steps-13 and 14: Conduct Tukey Honest Significant Difference (HSD) Test
+
+#### <BR> This method is more effective for controlling the Type I error rate across multiple comparisons and so it is generally accepted as a good technique for pairwise testing. An object of aov function, which is identical to the lm (linear regression) function, is passed to the TukeyHSD test for a complete comparison of independent variables.
+
+```{r}
+# TukeyHSD Test
+av <- aov(lm(Score ~ Interviewer.Type * Assessment.Type, dataTwoWayComparisons))
+TukeyHSD(av, conf.level=0.95)
+````
+#### <BR> Most Noticable differences are observed in the assessment scores: -
+* by Developers and Analysts;
+* by Developers and Leadership;
+* between Behavioral and Technical Assessments;
+* between Behavioral and Technical Assessments by Recent Hires especially;
+* in Behavioral Assessment by all Interview Types except Analysts;
+* in Technical Assessment by the Recent Hires and Developers; 
+* in Technical Assessment by the Leadership and Developers;
+
+### End of Analysis
+
